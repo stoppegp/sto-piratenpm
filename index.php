@@ -15,6 +15,9 @@ if ($_POST['reset'] == "true") {
      $_SESSION['ansprechpartner3'] = $std_ansprechpartner3;
      $_SESSION['anschreiben'] = $std_anschreiben;
      $_SESSION['footer'] = $std_footer;
+     $_SESSION['treffen'] = $std_treffen;
+     $_SESSION['anschrift'] = $std_anschrift;
+     $_SESSION['betreff'] = "";
      $_SESSION['step'] = 1;
 }
 if (isset($_POST['step'])) {
@@ -46,33 +49,78 @@ if ($_SESSION['step'] == "send") {
             $mail = new PHPMailer();
             $mail->From = $std_from;
             $mail->FromName = $std_fromname;
+			
+			if (($std_smtphost != "") && ($std_smtpuser != "") && ($std_smtppass != "")) {
+				$mail->IsSMTP();
+				$mail->SMTPAuth = true;
+				$mail->Host     = $std_smtphost;
+				$mail->Username = $std_smtpuser;
+				$mail->Password = $std_smtppass;
+			}
+
+			
+			$mail2 = new PHPMailer();
+			if (($std_smtphost != "") && ($std_smtpuser != "") && ($std_smtppass != "")) {
+				$mail2->IsSMTP();
+				$mail2->SMTPAuth = true;
+				$mail2->Host     = $std_smtphost;
+				$mail2->Username = $std_smtpuser;
+				$mail2->Password = $std_smtppass;
+			}
+			$mail2->From = $std_from;
+			$mail2->FromName = $std_fromname;
+			$mail2->AddBCC($std_from);
+			$mail2->Body = "Über piratenpm wurde eine Pressemitteilung an folgende Adressen verschickt:\n";
             
             if ($_POST['test'] != "yes") {
                 if (is_array($_SESSION['email']) & (count($_SESSION['email']) > 0)) {
                     foreach ($_SESSION['email'] as $key => $val) {
                         $mail->AddBCC($key);
+						$mail2->Body .= $key."\n";
                     }
                 }
                 if (is_array($_SESSION['emailplus']) & (count($_SESSION['emailplus']) > 0)) {
                     foreach ($_SESSION['emailplus'] as $key => $val) {
                         $mail->AddBCC($val);
+						$mail2->Body .= $val."\n";
                     }
                 }
             } else {
                 $mail->AddBCC($_POST['testmail']);
             }
             
-            $mail->Subject = "Pressemitteilung: ".$_SESSION['titel'];
+            if ($_POST['test'] != "yes") {
+				if (trim($_SESSION['betreff']) != "") {
+                    $mail->Subject = $_SESSION['betreff'];
+                } else {
+                    $mail->Subject = "Pressemitteilung: ".$_SESSION['titel'];
+                }
+			} else {
+				if (trim($_SESSION['betreff']) != "") {
+                    $mail->Subject = "[Testmail] ".$_SESSION['betreff'];
+                } else {
+                    $mail->Subject = "[Testmail] Pressemitteilung: ".$_SESSION['titel'];
+                }
+			}
+            if (trim($_SESSION['betreff']) != "") {
+                $mail2->Subject = "PM verschickt: ".$_SESSION['betreff'];
+            } else {
+                $mail2->Subject = "PM verschickt: ".$_SESSION['titel'];
+            }
             $mail->Body = $_SESSION['mailtext'];
+            $mail2->Body .= "\n----------------------------\n\n".$_SESSION['mailtext'];
 
             $mail->AddAttachment('out/'.session_id().'/PM-Piraten.pdf','piraten-pm.pdf');
+            $mail2->AddAttachment('out/'.session_id().'/PM-Piraten.pdf','piraten-pm.pdf');
             $mail->AddAttachment('out/'.session_id().'/PM-Piraten.txt','piraten-pm.txt');
+            $mail2->AddAttachment('out/'.session_id().'/PM-Piraten.txt','piraten-pm.txt');
             
             if (is_array($_SESSION['anhang']) && (count($_SESSION['anhang']) > 0)) {
                 foreach ($_SESSION['anhang'] as $key => $val) {
                     $mail->AddAttachment('out/'.session_id().'/anhang/'.$val,$val);
+                    $mail2->AddAttachment('out/'.session_id().'/anhang/'.$val,$val);
                 }
-            }
+            } 
             
             /* E-Mail senden */
              if(!$mail->Send())
@@ -85,6 +133,9 @@ if ($_SESSION['step'] == "send") {
               {
                  //$mail->Send() liefert TRUE zurück: Die Email ist unterwegs
                  $sendmsg = "Die Email wurde versandt.";
+				 if ($_POST['test'] != "yes") {
+					$mail2->Send();
+				 }
               }
               
               if ($_POST['test'] == "yes") {
@@ -98,8 +149,8 @@ if ($_SESSION['step'] == "send") {
 }
 
 if ($_SESSION['step'] === "do_edit_pm") {
-    $_SESSION['text'] = $_POST['text'];
-    $_SESSION['titel'] = $_POST['titel'];
+    $_SESSION['text'] = html_entity_decode($_POST['text']);
+    $_SESSION['titel'] = html_entity_decode($_REQUEST['titel']);
     $_SESSION['datum'] = $_POST['datum'];
     $_SESSION['pdf'] = "0";
     $_SESSION['txt'] = "0";
@@ -132,6 +183,9 @@ if ($_SESSION['step'] === "do_edit_ap") {
 if ($_SESSION['step'] === "do_edit_texte") {
     $_SESSION['anschreiben'] = $_POST['anschreiben'];
     $_SESSION['footer'] = $_POST['footer'];
+    $_SESSION['treffen'] = $_POST['treffen'];
+    $_SESSION['anschrift'] = $_POST['anschrift'];
+    $_SESSION['betreff'] = $_POST['betreff'];
     
     if ($_POST['anschreibenstd'] == "yes") {
         $txt = fopen("std/anschreiben.tpl", "w");
@@ -141,6 +195,16 @@ if ($_SESSION['step'] === "do_edit_texte") {
     if ($_POST['footerstd'] == "yes") {
         $txt = fopen("std/footer.tpl", "w");
         fwrite($txt, $_SESSION['footer']);
+        fclose($txt);
+    }
+    if ($_POST['treffenstd'] == "yes") {
+        $txt = fopen("std/treffen.tpl", "w");
+        fwrite($txt, $_SESSION['treffen']);
+        fclose($txt);
+    }
+    if ($_POST['anschriftstd'] == "yes") {
+        $txt = fopen("std/anschrift.tpl", "w");
+        fwrite($txt, $_SESSION['anschrift']);
         fclose($txt);
     }
     
@@ -251,17 +315,14 @@ if ($_SESSION['step'] === "1") {
         $ok_anhang = false;
     }
     $_SESSION['mailtext'] = $_SESSION['anschreiben']."\n\n".$std_trenner."\n\n".$_SESSION['titel']."\n\n".$_SESSION['text']."\n\n".$std_trenner."\n\n";
-    if ($_SESSION['ansprechpartner1'] || $_SESSION['ansprechpartner2'] || $_SESSION['ansprechpartner3']) {
+    if ($_SESSION['ansprechpartner1'] || $_SESSION['ansprechpartner2']) {
         $_SESSION['mailtext'] .= "Ansprechpartner:\n\n";
     }
     if ($_SESSION['ansprechpartner1']) {
-        $_SESSION['mailtext'] .= $_SESSION['ansprechpartner1']."\n\n";
+        $_SESSION['mailtext'] .= "Allgemeine Anfragen:\n\n".$_SESSION['ansprechpartner1']."\n\n";
     }
     if ($_SESSION['ansprechpartner2']) {
-        $_SESSION['mailtext'] .= $_SESSION['ansprechpartner2']."\n\n";
-    }
-    if ($_SESSION['ansprechpartner3']) {
-        $_SESSION['mailtext'] .= $_SESSION['ansprechpartner3']."\n\n";
+        $_SESSION['mailtext'] .= "Fragen zu dieser Pressemitteilung:\n\n".$_SESSION['ansprechpartner2']."\n\n";
     }
     $_SESSION['mailtext'] .= $std_trenner."\n\n";
     $_SESSION['mailtext'] .= $_SESSION['footer'];

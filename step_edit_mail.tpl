@@ -21,9 +21,9 @@
     <tr>
         <td>Weitere Adressen:</td>
         <td>
-            <textarea name="emailplus"><?php echo htmlspecialchars(implode("\n", $_SESSION['emailplus'])); ?></textarea><br>
+            <textarea name="emailplus"><?php echo htmlspecialchars(implode("\n", $_SESSION['emailplus']), ENT_COMPAT | ENT_HTML401, "ISO8859-15"); ?></textarea><br>
             <small>Eine E-Mail-Adresse pro Zeile</small><br>
-            <small>Bitte die E-Mail auch an info@piratenpartei-gp.de schicken</small>
+            <small>Die E-Mail wird automatisch auch an presse@piratenpartei-gp.de geschickt.</small>
         </td>
     </tr>
 </table>

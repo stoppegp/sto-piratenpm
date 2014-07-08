@@ -1,10 +1,11 @@
 <?php
 
 require('FPDF/fpdf.php');
+require('FPDI/fpdi.php');
 
 
 
-class PDF extends FPDF
+class PDF extends FPDI
 {
 
 function WriteHTML($html)
@@ -87,70 +88,115 @@ function CloseTag($tag)
 
 function Header()
 {
-    // Position at 1.5 cm from bottom
-    // Arial italic 8
-    $this->SetMargins(0,0,0);
-    $this->SetFont('Arial','I',8);
-    // Page number
-    $this->SetY(0);
-    
-$this->SetFont('Arial','B',14);
-$this->SetFillColor(255,166,64);
-$this->Cell(0,1,'',0,1,'L',true);
-$this->Cell(0,28,'       '.$std_pdf_header,0,1,'L',true);
-$this->SetFillColor(0,0,0);
+    $this->AddFont('verdana', '', 'VERDANA.php');
+    $this->AddFont('verdana', 'b', 'VERDANAB.php');
+    $this->SetTopMargin(15);
+    $this->SetRightMargin(1);
+    $this->setSourceFile("vorlage.pdf");
+    // import page 1
+    $tplIdx = $this->importPage(1);
+    // use the imported page and place it at point 10,10 with a width of 100 mm
+    $this->useTemplate($tplIdx, 0, 0, 210);
 
-$this->Cell(0,1,'',0,1,'L',true);
-$this->Image('std/logo.png',140,2,50);
-$this->SetMargins(10,10,10);
-$this->Cell(0,10,'',0,1,'L',false);
+    $this->SetXY(150,10);
+    $this->SetFont('Verdana','B',10);
+    $this->Write(5, "Piratenpartei ");
+    $this->SetFont('Verdana','',10);
+    $this->Write(5, "Göppingen");
+    $this->Ln();
+    $this->Ln();
+    $this->SetX(150);
+    $this->MultiCell(0,5,$_SESSION['anschrift']);
+    $this->Ln();
+    $this->Ln();
+    $this->Ln();
+
+    if (($_SESSION['ansprechpartner1'] != "") || ($_SESSION['ansprechpartner2'] != "")) {
+        $this->SetX(150);
+        $this->SetFont('Verdana','B',8);
+        $this->Write(5, "Ansprechpartner");
+        $this->Ln();
+        $this->Ln();
+        $this->SetFont('Verdana','',8);
+        
+        if (($_SESSION['ansprechpartner1'] != "")) {
+            $this->SetX(150);
+            $this->Write(5, "Allgemeine Anfragen:");
+            $this->Ln();
+            $this->Ln();
+            $this->SetX(150);
+            $this->MultiCell(0,4,$_SESSION['ansprechpartner1']);
+            $this->Ln();
+        }
+        if (($_SESSION['ansprechpartner2'] != "")) {
+            $this->SetX(150);
+            $this->Write(5, "Fragen zu dieser Pressmitteilung:");
+            $this->Ln();
+            $this->Ln();
+            $this->SetX(150);
+            $this->MultiCell(0,4,$_SESSION['ansprechpartner2']);
+            $this->Ln();
+        }
+        
+        $this->Ln();
+        $this->Ln();
+    }
+
+    if (($_SESSION['treffen'] != "")) {
+        $this->SetX(150);
+        $this->SetFont('Verdana','B',8);
+        $this->Write(5, "Treffen");
+        $this->Ln();
+        $this->Ln();
+        $this->SetFont('Verdana','',8);
+        $this->SetX(150);
+        $this->MultiCell(0,4,$_SESSION['treffen']);
+        $this->Ln();
+        $this->Ln();
+        $this->Ln();
+    }
+    $this->SetRightMargin(70);
+    $this->SetXY(10,10);
 }
 
 function Footer()
 {
-    // Position at 1.5 cm from bottom
-    // Arial italic 8
-    $this->SetMargins(0,0,0);
-    $this->SetFont('Arial','I',8);
-    // Page number
-    $this->SetY(-32);
-    
-    $this->Cell(0,1,'',0,1,'L',false);
-$this->SetFillColor(0,0,0);
-
-$this->Cell(0,1,'',0,1,'L',true);
-$this->SetFillColor(255,166,64);
-
-    $this->Cell(0,30,'Seite '.$this->PageNo().'/{nb}',0,0,'R', true);
-$this->SetXY(10,-29);
-$this->MultiCell(60,5,$_SESSION['ansprechpartner1']);
-$this->SetXY(70,-29);
-$this->MultiCell(60,5,$_SESSION['ansprechpartner2']);
-$this->SetXY(130,-29);
-$this->MultiCell(60,5,$_SESSION['ansprechpartner3']);
-$this->SetMargins(10,10,10);
+$this->SetXY(10,284);
+$this->SetFont('Verdana','',8);
+$this->Write(5,"Seite ".$this->PageNo()." von {nb}");
 }
 }
 
 // Instanciation of inherited class
 $pdf = new PDF();
+
 $pdf->AliasNbPages();
-$pdf->SetAutoPageBreak(true, 35);
-$pdf->SetMargins(0,0,0);
+$pdf->SetAutoPageBreak(true, 20);
+$pdf->SetMargins(10,10,10, 10);
+
 $pdf->AddPage();
+$pdf->SetTopMargin(35);
+$pdf->SetRightMargin(70);
+$pdf->SetFont('Verdana','B',14);
+$pdf->Write(6, "Piratenpartei ");
+$pdf->SetFont('Verdana','',14);
+$pdf->Write(6, "Göppingen");
+$pdf->Ln();
+$pdf->SetFont('Verdana','',12);
+$pdf->Write(6, "Pressemitteilung");
+$pdf->Ln();
+$pdf->Ln();
 
-
-$pdf->SetMargins(10,10,10);
-$pdf->SetFont('Arial','',12);
-$pdf->Cell(0,5, $_SESSION['datum'],0,1);
-$pdf->SetFont('Arial','B',12);
+$pdf->SetFont('Verdana','',10);
+$pdf->Cell(150,5, $_SESSION['datum'],0,1);
+$pdf->SetFont('Verdana','B',10);
 $pdf->Write(5, $_SESSION['titel']);
 $pdf->Ln();
 $pdf->Ln();
-$pdf->SetFont('Arial','',12);
+$pdf->SetFont('Verdana','',10);
 //$text = file_get_contents('text.html');
 $pdf->WriteHTML($_SESSION['text']);
 $pdf->Ln();
-
+$pdf->AliasNbPages();
 $pdf->Output("out/".session_id()."/PM-Piraten.pdf", "F");
 ?>

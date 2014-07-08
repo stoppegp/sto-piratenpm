@@ -54,10 +54,17 @@ if ($sendmsg) {
 
 <div class="part0">
 <h3>Vorschau</h3>
-<div class="pre">Betreff: Pressemitteilung: <?=$_SESSION['titel'];?>
+<div class="pre">Betreff: <?php
+if (trim($_SESSION['betreff']) != "") {
+    echo $_SESSION['betreff'];
+} else {
+    echo "Pressemitteilung: ".$_SESSION['titel'];
+}
+
+?>
 
 
-<?php echo htmlspecialchars($_SESSION['mailtext']); ?>
+<?php echo htmlspecialchars($_SESSION['mailtext'], ENT_COMPAT | ENT_HTML401, "ISO8859-15"); ?>
 </div>
 
 <h3>Anhänge</h3>
@@ -104,6 +111,7 @@ Die Mail wird an folgende Adressen (im BCC) verschickt:
             <?
         }
     ?>
+	<li style="color:gray;"><?php echo $std_from; ?></li>
 </ul>
 
 <form action="index.php" method="post">
@@ -115,11 +123,11 @@ Die Mail wird an folgende Adressen (im BCC) verschickt:
 if (!$ok_pm || !$ok_ap || !$ok_texte || !$ok_mail || !$ok_pdf || !$ok_txt) {
     ?>
     <div style="font-weight:bold;color:red;">Es gibt noch Probleme. (siehe Übersicht oben)</div>
-<input <?php echo (is_array($_SESSION['email']) && (count($_SESSION['email']) > 0)) ? "" : "disabled=\"disabled\""; ?> type="submit" style="color:red;font-weight:bold;" value="Trotzdem verschicken (endgültig!)" />
+<input <?php echo ($ok_mail) ? "" : "disabled=\"disabled\""; ?> type="submit" style="color:red;font-weight:bold;" value="Trotzdem verschicken (endgültig!)" />
     <?
 } else {
 ?>
-<input <?php echo (is_array($_SESSION['email']) && (count($_SESSION['email']) > 0)) ? "" : "disabled=\"disabled\""; ?> type="submit" style="color:red;font-weight:bold;" value="E-Mail verschicken (endgültig!)" />
+<input <?php echo ($ok_mail) ? "" : "disabled=\"disabled\""; ?> type="submit" style="color:red;font-weight:bold;" value="E-Mail verschicken (endgültig!)" />
 <?
 }
 ?>

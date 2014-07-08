@@ -4,15 +4,15 @@
 <table>
     <tr>
         <td>Datum:</td>
-        <td><input name="datum" value="<?=htmlspecialchars($_SESSION['datum']);?>" /></td>
+        <td><input name="datum" value="<?=htmlspecialchars($_SESSION['datum'], ENT_COMPAT | ENT_HTML401, "ISO8859-15");?>" /></td>
     </tr>
     <tr>
         <td>Titel:</td>
-        <td><input name="titel" style="width:500px;" value="<?=htmlspecialchars($_SESSION['titel']);?>" /></td>
+        <td><input name="titel" id="pmtitel" style="width:500px;" value="<?=htmlspecialchars($_SESSION['titel'], ENT_COMPAT | ENT_HTML401, "ISO8859-15");?>" /></td>
     </tr>
     <tr>
         <td>Text:</td>
-        <td><textarea name="text" style="width:500px;height:500px;"><?=htmlspecialchars($_SESSION['text']);?></textarea></td>
+        <td><textarea name="text" id="pmtext" style="width:500px;height:500px;"><?=$_SESSION['text'];?></textarea></td>
     </tr>
 </table>
 </div>

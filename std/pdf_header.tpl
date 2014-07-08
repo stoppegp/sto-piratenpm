@@ -1,0 +1,1 @@
+Pressemitteilung der Piratenpartei Göppingen
